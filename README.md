@@ -1,44 +1,54 @@
+# ann-dl-iaravsp
+
+Entregas da disciplina **Artificial Neural Networks and Deep Learning** — Insper, 2026.2.
+
+Site publicado: https://iaravsp.github.io/ann-dl-iaravsp/
+
+## Estrutura
+
+```
+docs/
+  index.md                     # landing page
+  exercises/
+    data/
+      index.md                 # relatório
+      code/                    # scripts (.py)
+      figures/                 # figuras geradas pelos scripts (.png)
+    perceptron/
+    mlp/
+    vae/
+  projects/
+data/
+  spaceship-titanic/           # dataset do Kaggle (não versionado por padrão)
+mkdocs.yml
+requirements.txt
+```
+
 ## Setup
 
-Para utilizar o código deste repositório, siga as instruções a seguir:
-
-Crie um ambiente virtual do Python:
-
 ``` shell
-python3 -m venv env
+python -m venv env
+source ./env/Scripts/activate      # Windows (Git Bash) — Linux/macOS: source ./env/bin/activate
+python -m pip install -r requirements.txt --upgrade
 ```
 
-Ative o ambiente virtual (**você deve fazer isso sempre que for executar algum script deste repositório**):
+## Rodar os scripts dos exercícios
+
+Sempre a partir da raiz do repositório:
 
 ``` shell
-source ./env/bin/activate
+python docs/exercises/data/code/<script>.py
 ```
 
-Instale as dependências com:
+Cada script salva suas figuras em `docs/exercises/<slug>/figures/`. As figuras
+são versionadas; o relatório as exibe por caminho relativo e puxa o código com
+`--8<--`.
 
-``` shell
-python3 -m pip install -r requirements.txt --upgrade
-```
-
-## Deployment
-
-O material utiliza o [mkdocs](https://www.mkdocs.org/) para gerar a documentação. Para visualizar a documentação, execute o comando:
+## Visualizar o site localmente
 
 ``` shell
 mkdocs serve -o
 ```
 
-Para subir ao GitHub Pages, execute o comando:
-
-``` shell
-mkdocs gh-deploy
-```
-
-
-## Notebooks
-
-Para subir notebooks no mkdocs, podemos utilizar a biblioteca do [mkdocs-jupyter](https://github.com/danielfrg/mkdocs-jupyter).
-
-Instalação, utilização e exemplos podem ser vistos na [documentação oficial](https://github.com/danielfrg/mkdocs-jupyter).
-
-O arquivo `mkdocs.yml` tem anotações nos nós modificados de exemplo.
+O deploy para o GitHub Pages é automático via GitHub Actions (`.github/workflows/main.yaml`)
+a cada push na `main`.

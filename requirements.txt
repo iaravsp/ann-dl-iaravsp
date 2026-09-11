@@ -1,18 +1,14 @@
-markdown-grid-tables
-markdown-exec[ansi]
-mkdocs-badges
+# Site
 mkdocs-material
 mkdocs-material-extensions
+markdown-grid-tables
 mkdocs-minify-plugin
 mkdocs-glightbox
 mkdocs-git-authors-plugin
-mkdocs-git-committers-plugin-2
 mkdocs-git-revision-date-localized-plugin
-mkdocs-render-swagger-plugin
-mkdocs-jupyter
-termynal
-matplotlib
+
+# Exercicios
 numpy
 pandas
-yfinance
-
+matplotlib
+scikit-learn
