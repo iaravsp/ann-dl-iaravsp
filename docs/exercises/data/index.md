@@ -149,3 +149,134 @@ Esses pontos que invadem são erro que não tem como evitar: eles caem numa regi
 onde outra classe é mais provável, então nenhum classificador acerta todos sem
 decorar o treino. É isso que a taxa de mistura está medindo, e por isso ela
 depende da razão entre distância e espalhamento, e não só da distância.
+
+## Exercise 2: Non-Linearity in Higher Dimensions
+
+### A — Dataset I: shifted Gaussians
+
+Gerei 500 amostras por classe em 5 dimensões, usando normal multivariada. A
+classe A fica centrada na origem e a classe B em $[1{,}5;\ 1{,}5;\ 1{,}5;\ 1{,}5;\ 1{,}5]$,
+cada uma com a matriz de covariância do enunciado.
+
+As duas matrizes não são iguais: a da classe B tem variâncias maiores (1,5
+contra 1,0 na diagonal) e uma correlação negativa entre as duas primeiras
+dimensões, enquanto na classe A essa correlação é positiva. Ou seja, além de
+estarem em lugares diferentes, as nuvens têm formatos diferentes.
+
+### B — Dataset II: concentric shells
+
+Aqui a estrutura é radial: cada ponto é uma **direção** vezes um **raio**, e eu
+sorteio os dois separadamente.
+
+Para a direção, sorteio um vetor $v$ de 5 números tirados de uma normal padrão
+e divido ele pelo próprio tamanho: $u = v / \lVert v \rVert$. Isso deixa o vetor
+com comprimento 1, ou seja, ele vira só uma direção.
+
+Esse jeito de sortear direção funciona porque a nuvem de pontos que sai de
+$v \sim N(0, I_5)$ tem formato de bola: ela é igual em todas as direções, nenhuma
+é mais provável que outra. Então, quando eu normalizo, as direções saem
+espalhadas por igual.
+
+Não daria certo sortear de qualquer distribuição. Se eu usasse uma uniforme em
+$[-1, 1]$ em cada coordenada, estaria amostrando de dentro de um cubo — e cubo
+tem mais espaço nas quinas do que no meio das faces, então sobrariam direções
+demais apontando para as diagonais.
+
+O raio é o que separa as classes: a classe C (núcleo) tem
+$\rho \sim N(2{,}0;\ 0{,}4)$ e a classe D (casca) tem $\rho \sim N(5{,}0;\ 0{,}4)$.
+O ponto final é $x = \rho \cdot u$.
+
+No fim isso dá duas cascas esféricas, uma dentro da outra, com o mesmo centro.
+
+### C — Visualize and compare
+
+![Figure 4](figures/fig4_pca.png)
+/// caption
+**Figura 4** — projeção PCA dos dois datasets de 5D para 2D, lado a lado.
+///
+
+| | Dataset I | Dataset II |
+|---|---|---|
+| Distância entre os centros | 3,2282 | 0,2662 |
+| Variância explicada PC1 + PC2 | 0,6597 | 0,4291 |
+
+A distância entre centros é medida em 5D, entre as médias empíricas das duas
+classes. No Dataset I ela dá 3,2282, bem perto do valor teórico
+$1{,}5\sqrt{5} = 3{,}3541$ — a diferença é só flutuação amostral.
+
+No Dataset II a distância dá 0,2662, praticamente zero. Faz sentido: as duas
+cascas têm o mesmo centro, então as médias das duas classes caem as duas perto
+da origem, e o que sobra é ruído de amostragem.
+
+A variância explicada também diz algo. No Dataset I, PC1 sozinha pega 50% — ela
+encontrou a direção do deslocamento entre as classes, que é a direção onde tem
+mais variância. Já no Dataset II os dois primeiros componentes juntos pegam
+42,9%, que é quase exatamente $2/5 = 40\%$. Isso é o que se esperaria se
+nenhuma direção fosse especial: com os dados espalhados igualmente pelas 5
+dimensões, cada componente carrega mais ou menos um quinto da variância, e o
+PCA não tem o que destacar.
+
+![Figure 5](figures/fig5_radii.png)
+/// caption
+**Figura 5** — histogramas sobrepostos de $\lVert x \rVert$ para as duas classes
+de cada dataset.
+///
+
+A Figura 5 mostra a diferença de forma mais clara. No Dataset I os raios das
+duas classes se sobrepõem bastante. No Dataset II eles ficam completamente
+separados: o raio médio da classe C é 1,97 e o da classe D é 5,00, e no meu
+conjunto **nenhum ponto** da classe C tem raio maior que o menor raio da classe D.
+
+### D — Analysis
+
+**Centro junto, raio separado: por que reta não resolve.** Um classificador
+linear funciona assim: ele escolhe uma direção e corta o espaço com um plano
+perpendicular a ela. Tudo de um lado é uma classe, tudo do outro é a outra.
+
+O problema do Dataset II é que as duas classes têm o mesmo centro e se espalham
+igual para todos os lados. Então, escolha a direção que escolher, as duas
+classes aparecem centradas no mesmo lugar — qualquer corte que eu fizer vai
+pegar metade de cada classe de cada lado. Não existe corte bom.
+
+O que separa as classes não é a direção, é a **distância até o centro**. E
+distância não dá para escrever como uma soma das coordenadas com pesos, que é
+tudo o que um modelo linear sabe fazer.
+
+**Por que precisa de não-linearidade.** Um perceptron calcula $w \cdot x + b$,
+que é só somar as coordenadas multiplicadas por pesos. Não existe escolha de
+pesos que produza uma regra do tipo "está a uma distância entre 1,5 e 2,5 do
+centro". Para chegar nisso preciso elevar as coordenadas ao quadrado, e isso um
+modelo linear não faz — é o que as camadas escondidas com ativação não-linear
+resolvem.
+
+**Projeção ruim não prova que não dá para separar.** Olhando a Figura 4, dá para
+ver a estrutura do Dataset II: o núcleo azul no meio e a casca laranja em volta.
+Mesmo assim, nenhuma reta separa os dois. E a figura ainda engana um pouco:
+pontos da casca que estavam longe numa direção que o PCA jogou fora acabam
+aparecendo perto do centro, no meio do azul.
+
+O motivo é que o PCA procura as direções onde os dados mais variam, e não as
+direções que separam as classes. Como no Dataset II tudo varia igual em toda
+direção, ele acabou pegando duas direções quaisquer. Ou seja, o que eu estou
+vendo é uma sombra ruim de algo que em 5D separa perfeitamente — e uma sombra
+ruim não prova nada.
+
+A prova de que dá para separar é simples: basta olhar
+$\lVert x \rVert^2 = x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2$, que é a distância
+ao centro elevada ao quadrado. Se eu usasse esse único número no lugar das
+componentes principais, as duas classes ficariam separadas por um limiar — que é
+exatamente o que a Figura 5 mostra.
+
+## Results Summary
+
+| # | Item | Your value |
+|---|------|-----------|
+| 1 | Mixing rate at s = 0.5 | 0,000 |
+| 2 | Mixing rate at s = 1.0 | 0,068 |
+| 3 | Mixing rate at s = 2.0 | 0,225 |
+| 4 | Mixing rate at s = 4.0 | 0,417 |
+| 5 | Smallest r_ij at s = 1.0, and which pair | 1,326 (par 0-1) |
+| 6 | Distance between centers - Dataset I | 3,2282 |
+| 7 | Distance between centers - Dataset II | 0,2662 |
+| 8 | Explained variance PC1 + PC2 - Dataset I | 0,6597 |
+| 9 | Explained variance PC1 + PC2 - Dataset II | 0,4291 |

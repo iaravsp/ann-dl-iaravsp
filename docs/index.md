@@ -3,17 +3,18 @@
 Portfólio de entregas da disciplina — Insper, 2026.2.
 
 **Aluna:** Iara Vivian Sousa Pinto (`iaravsp`)
+
 **Repositório:** [iaravsp/ann-dl-iaravsp](https://github.com/iaravsp/ann-dl-iaravsp)
 
 ## Entregas
 
-| Exercício | Página | Prazo | Status |
-|---|---|---|---|
-| Data | [exercises/data](exercises/data/index.md) | 10/09/2026 | em andamento |
-| Perceptron | [exercises/perceptron](exercises/perceptron/index.md) | — | não iniciado |
-| MLP | [exercises/mlp](exercises/mlp/index.md) | — | não iniciado |
-| VAE | [exercises/vae](exercises/vae/index.md) | — | não iniciado |
-| Projeto | [projects](projects/index.md) | — | não iniciado |
+| Exercício | Página |
+|---|---|
+| Data | [exercises/data](exercises/data/index.md) |
+| Perceptron | [exercises/perceptron](exercises/perceptron/index.md) |
+| MLP | [exercises/mlp](exercises/mlp/index.md) |
+| VAE | [exercises/vae](exercises/vae/index.md) |
+| Projeto | [projects](projects/index.md) | — |
 
 ## Como rodar os códigos
 

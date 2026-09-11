@@ -102,6 +102,8 @@ plugins:
   - glightbox
   - git-revision-date-localized:
       enable_creation_date: true
+      timezone: America/Sao_Paulo
+      locale: pt
   - git-authors
   - search
   - minify:
