@@ -30,8 +30,6 @@ COLORS = {0: "tab:blue", 1: "tab:orange", 2: "tab:green", 3: "tab:red"}
 
 SCALES = [0.5, 1.0, 2.0, 4.0]
 
-# Centros verdadeiros empilhados, na ordem dos rotulos. Usado tanto na taxa de
-# mistura quanto no desenho das fronteiras.
 CENTERS = np.vstack([mu for mu, _ in CLASSES.values()])
 
 
@@ -52,8 +50,7 @@ def generate(rng, scale=1.0, n_per_class=N_PER_CLASS):
     ----------
     rng : np.random.Generator
     scale : float
-        Multiplica todos os desvios padrao. O item A usa 1.0; o item B
-        reutiliza esta funcao com 0.5, 1.0, 2.0 e 4.0.
+        Multiplica todos os desvios padrao.
     n_per_class : int
 
     Returns
@@ -74,8 +71,8 @@ def generate(rng, scale=1.0, n_per_class=N_PER_CLASS):
 def plot_clouds(ax, X, y):
     """Desenha o scatter das quatro classes com os centros marcados.
 
-    Recebe um ``ax`` (nao cria a figura) porque o item B vai chamar esta
-    funcao uma vez por subplot.
+    Recebe um ``ax`` (nao cria a figura) porque o item B chama esta funcao
+    uma vez por subplot.
     """
     for label, (mu, _) in CLASSES.items():
         mask = y == label
@@ -140,8 +137,6 @@ def figure2(rng):
     """Quatro subplots, um por escala, com os mesmos limites de eixo."""
     datasets = [(s, generate(rng, scale=s)) for s in SCALES]
 
-    # Limites comuns calculados sobre todas as escalas, senao a comparacao
-    # visual entre os paineis nao vale nada.
     all_points = np.vstack([X for _, (X, _) in datasets])
     pad = 1.0
     xlim = (all_points[:, 0].min() - pad, all_points[:, 0].max() + pad)
@@ -165,8 +160,12 @@ def figure3(rates):
     scales = sorted(rates)
     ax.plot(scales, [rates[s] for s in scales], marker="o", color="tab:purple")
     for s in scales:
-        ax.annotate(f"{rates[s]:.3f}", (s, rates[s]),
-                    textcoords="offset points", xytext=(8, -4))
+        ax.annotate(
+            f"{rates[s]:.3f}",
+            (s, rates[s]),
+            textcoords="offset points",
+            xytext=(8, -4),
+        )
     ax.set_title("Figure 3 - taxa de mistura vs. escala dos desvios")
     ax.set_xlabel("escala $s$ aplicada aos desvios padrao")
     ax.set_ylabel("taxa de mistura")
@@ -189,10 +188,15 @@ def figure1_boundaries(X, y):
     regions = nearest_center(grid).reshape(xx.shape)
 
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.contourf(xx, yy, regions, levels=[-0.5, 0.5, 1.5, 2.5, 3.5],
-                colors=[COLORS[k] for k in range(4)], alpha=0.15)
-    ax.contour(xx, yy, regions, levels=[0.5, 1.5, 2.5],
-               colors="black", linewidths=1.2)
+    ax.contourf(
+        xx,
+        yy,
+        regions,
+        levels=[-0.5, 0.5, 1.5, 2.5, 3.5],
+        colors=[COLORS[k] for k in range(4)],
+        alpha=0.15,
+    )
+    ax.contour(xx, yy, regions, levels=[0.5, 1.5, 2.5], colors="black", linewidths=1.2)
     plot_clouds(ax, X, y)
     ax.set_title("Fronteiras de decisao por centro mais proximo")
     save(fig, "fig1_boundaries.png")
