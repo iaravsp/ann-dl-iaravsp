@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://iaravsp.github.io/ann-dl-iaravsp/</loc>
+         <lastmod>2026-09-11</lastmod>
+    </url>
+    <url>
+         <loc>https://iaravsp.github.io/ann-dl-iaravsp/exercises/data/</loc>
+         <lastmod>2026-09-11</lastmod>
+    </url>
+    <url>
+         <loc>https://iaravsp.github.io/ann-dl-iaravsp/exercises/mlp/</loc>
+         <lastmod>2026-09-11</lastmod>
+    </url>
+    <url>
+         <loc>https://iaravsp.github.io/ann-dl-iaravsp/exercises/perceptron/</loc>
+         <lastmod>2026-09-11</lastmod>
+    </url>
+    <url>
+         <loc>https://iaravsp.github.io/ann-dl-iaravsp/exercises/vae/</loc>
+         <lastmod>2026-09-11</lastmod>
+    </url>
+    <url>
+         <loc>https://iaravsp.github.io/ann-dl-iaravsp/projects/</loc>
+         <lastmod>2026-09-11</lastmod>
+    </url>
+</urlset>
