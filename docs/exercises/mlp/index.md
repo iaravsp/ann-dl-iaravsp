@@ -494,6 +494,171 @@ A previsão passou de $0{,}3672$ para $0{,}7112$, ficando mais próxima do
 alvo $1{,}0000$. O ajuste foi feito no sentido contrário ao gradiente;
 para este passo com $\eta=0{,}3$, a verificação numérica confirma a redução.
 
+## Exercise 2
+
+[Notebook do Exercício 2](code/exercicio_2.ipynb)
+
+### A — Generate the data
+
+Foram geradas **1000 amostras com duas características**, usando os parâmetros do enunciado sem alterações. Os três grupos têm centros `[0, 0]`, `[3, 3]` e `[-3, -3]`, respectivamente, com 500, 250 e 250 amostras e desvio padrão `1.2`.
+
+A expressão `y = (c > 0).astype(int)` mantém o grupo central na classe 0 e reúne os dois grupos afastados na classe 1. Assim, cada classe tem **500 amostras**.
+
+A divisão usa `test_size=0.2`, `random_state=42` e `stratify=y`: **800 pontos no treino (400 de cada classe)** e **200 no teste (100 de cada classe)**. O teste foi reservado para a avaliação final. As características foram usadas na escala original; não houve ajuste de pré-processamento usando o teste.
+
+A semente dos dados e da divisão é 42. O objeto `rng = np.random.default_rng(42)` é usado na inicialização dos pesos da rede.
+
+![Figura 1 — Dados de classificação binária](figures/fig1.png)
+
+**Figura 1** — Os 1000 pontos, com os grupos central e afastados identificados pelas duas classes.
+
+### B — Establish the baseline
+
+A regressão logística foi ajustada apenas nos dados de treino, com `max_iter=1000` e `random_state=42`. Sua saída depende de uma combinação linear das duas características, portanto sua fronteira de decisão é uma reta.
+
+A **acurácia no teste foi de 47,5%**, equivalente a **95 acertos em 200 amostras**. Esse resultado será comparado com a MLP.
+
+### C — Implement the MLP
+
+A MLP foi implementada em NumPy com os tamanhos das camadas como argumento. Foi usada a arquitetura **2 → 8 → 1**, com uma camada oculta de oito neurônios `tanh` e uma saída `sigmoid`. Os biases começam em zero e os pesos usam inicialização de Xavier, com desvio padrão $\sqrt{2/(n_{\mathrm{entrada}}+n_{\mathrm{saída}})}$.
+
+| Configuração | Valor |
+|---|---|
+| Arquitetura | 2 entradas, 8 neurônios ocultos, 1 saída |
+| Parâmetros treináveis | 33 |
+| Ativação oculta | tanh |
+| Ativação de saída | sigmoid |
+| Perda | Entropia cruzada binária média |
+| Taxa de aprendizado | 0,1 |
+| Épocas | 2000 |
+| Lote | Todas as 800 amostras de treino |
+| Inicialização | Xavier, `rng` com semente 42 |
+| Limiar de classificação | 0,5 |
+
+Essas configurações foram definidas antes da avaliação do teste. A acurácia é calculada diretamente como a proporção de previsões corretas.
+
+#### Forward pass e perda
+
+Neste exercício, as amostras são organizadas nas **linhas** das matrizes. Para cada camada $\ell$, os pesos têm dimensão entrada × saída e o bias é somado a cada amostra:
+
+$$
+\mathbf{A}^{(0)}=\mathbf{X},\qquad
+\mathbf{Z}^{(\ell)}=\mathbf{A}^{(\ell-1)}\mathbf{W}^{(\ell)}+\mathbf{b}^{(\ell)}.
+$$
+
+Nas camadas ocultas, $\mathbf{A}^{(\ell)}=\tanh(\mathbf{Z}^{(\ell)})$.
+Na saída binária, cada logit $u_i$ é convertido em probabilidade:
+
+$$
+p_i=\sigma(u_i)=\frac{1}{1+e^{-u_i}}.
+$$
+
+A perda média é:
+
+$$
+L=-\frac{1}{N}\sum_{i=1}^{N}\left[y_i\log(p_i)+(1-y_i)\log(1-p_i)\right].
+$$
+
+No código, a mesma perda é calculada pela expressão equivalente
+$\frac{1}{N}\sum_i[\log(1+e^{u_i})-y_i u_i]$, usando `np.logaddexp(0, u)` para evitar problemas numéricos nas exponenciais e em `log(0)`.
+
+#### Backward pass
+
+Para cada probabilidade:
+
+$$
+\frac{\partial L}{\partial p_i}
+=\frac{1}{N}\left[-\frac{y_i}{p_i}+\frac{1-y_i}{1-p_i}\right]
+=\frac{p_i-y_i}{Np_i(1-p_i)}.
+$$
+
+Como $\partial p_i/\partial u_i=p_i(1-p_i)$, a regra da cadeia resulta em:
+
+$$
+\frac{\partial L}{\partial u_i}
+=\frac{p_i-y_i}{Np_i(1-p_i)}p_i(1-p_i)
+=\frac{p_i-y_i}{N}.
+$$
+
+Chamando a derivada em relação às pré-ativações de $\boldsymbol{\Delta}^{(\ell)}$, na última camada:
+
+$$
+\boldsymbol{\Delta}^{(L)}=\frac{\mathbf{P}-\mathbf{Y}}{N}.
+$$
+
+Para qualquer camada, os gradientes são:
+
+$$
+\frac{\partial L}{\partial\mathbf{W}^{(\ell)}}
+=(\mathbf{A}^{(\ell-1)})^T\boldsymbol{\Delta}^{(\ell)},\qquad
+\frac{\partial L}{\partial\mathbf{b}^{(\ell)}}
+=\sum_{i=1}^{N}\boldsymbol{\Delta}_{i,:}^{(\ell)}.
+$$
+
+Para propagar a derivada à camada oculta anterior:
+
+$$
+\boldsymbol{\Delta}^{(\ell-1)}
+=\left[\boldsymbol{\Delta}^{(\ell)}(\mathbf{W}^{(\ell)})^T\right]
+\odot\left[1-(\mathbf{A}^{(\ell-1)})^2\right],
+$$
+
+onde $\odot$ indica multiplicação elemento a elemento. A divisão por $N$ aparece uma única vez, na derivada da saída.
+
+#### Atualização e resultados
+
+Todos os gradientes são calculados antes de atualizar os parâmetros:
+
+$$
+\mathbf{W}^{(\ell)}\leftarrow\mathbf{W}^{(\ell)}-\eta\frac{\partial L}{\partial\mathbf{W}^{(\ell)}},\qquad
+\mathbf{b}^{(\ell)}\leftarrow\mathbf{b}^{(\ell)}-\eta\frac{\partial L}{\partial\mathbf{b}^{(\ell)}}.
+$$
+
+O treino registrou a perda inicial e a perda após cada atualização. Ela caiu de **0,8270 para 0,1134**. A MLP obteve **91,5% de acurácia no teste**, com **183 acertos em 200 pontos** — **44 pontos percentuais** acima do baseline.
+
+A ativação da saída e a função que retorna a perda e sua derivada são argumentos da classe. Assim, os métodos `forward`, `backward` e `update` podem ser reutilizados com outros tamanhos de camadas e outras saídas.
+
+
+![Figura 2 — Perda durante o treinamento](figures/fig2.png)
+
+**Figura 2** — Perda no treino desde a inicialização até a época 2000.
+
+![Figura 3 — Fronteira da MLP e pontos de teste](figures/fig3.png)
+
+**Figura 3** — O fundo representa as classes previstas pela rede; os pontos mostram as classes corretas das 200 amostras de teste. A linha preta marca probabilidade 0,5.
+
+#### Código executável
+
+Implementação da MLP:
+
+```python
+--8<-- "docs/exercises/mlp/code/mlp.py"
+```
+
+Geração dos dados, baseline, treinamento e gráficos:
+
+```python
+--8<-- "docs/exercises/mlp/code/exercicio_2.py"
+```
+
+Para reproduzir a partir da raiz do repositório:
+
+```powershell
+python -m pip install -r requirements.txt
+python docs/exercises/mlp/code/exercicio_2.py
+```
+
+### D — Analysis
+
+Na Figura 3, a classe 0 ocupa uma **faixa central**, enquanto a classe 1 ocupa **duas regiões em lados opostos dessa faixa**. A MLP aprendeu duas fronteiras aproximadamente paralelas, com pequenas variações na forma, para manter o grupo central separado dos dois grupos afastados.
+
+Uma única reta divide o plano em dois semiplanos. Ela não consegue colocar os dois grupos opostos da classe 1 de um lado e o grupo central da classe 0 do outro. A camada oculta combina várias transformações não lineares, permitindo atribuir a mesma classe às duas regiões afastadas.
+
+Além disso, a classe 1 foi construída com dois grupos em torno de centros opostos, enquanto a classe 0 fica perto da origem. As médias das classes ficam próximas, e a regressão logística não representa a diferença entre estar no centro e estar afastado em qualquer uma das duas direções. Seu resultado de **47,5%** fica próximo do patamar de 50% de um palpite aleatório em classes balanceadas; o valor abaixo de 50% neste teste é compatível com a variação da amostra e com o ajuste de uma fronteira inadequada para essa estrutura.
+
+A MLP alcançou **91,5%** porque sua fronteira acompanha a organização dos grupos. Os **17 erros** restantes aparecem em um conjunto com sobreposição entre as classes, especialmente próximo às fronteiras. A melhoria foi medida no teste, que não participou do treinamento.
+
+
 ## Results summary
 
 | # | Quantity | Value |
@@ -501,3 +666,5 @@ para este passo com $\eta=0{,}3$, a verificação numérica confirma a redução
 | 1 | Ex. 1 — $\mathbf{z}^{(1)}$ e $\mathbf{h}^{(1)}$ | $\mathbf{z}^{(1)}=[0{,}2700,-0{,}1800]$; $\mathbf{h}^{(1)}\approx[0{,}2636,-0{,}1781]$ |
 | 2 | Ex. 1 — $u^{(2)}$, $\hat y$ e $L$ | $u^{(2)}\approx0{,}3852$; $\hat y\approx0{,}3672$; $L\approx0{,}4004$ |
 | 3 | Ex. 1 — parâmetros após a atualização | $\mathbf{W}^{(1)}\approx[[0{,}3764,-0{,}1306],[0{,}1523,0{,}4191]]$; $\mathbf{b}^{(1)}\approx[0{,}2528,-0{,}2954]$; $\mathbf{W}^{(2)}\approx[0{,}5866,-0{,}3585]$; $b^{(2)}\approx0{,}5284$ |
+| 4 | Ex. 2 — acurácia do baseline linear no teste | 47,5% (95/200) |
+| 5 | Ex. 2 — arquitetura e acurácia no teste | 2 → 8 → 1; 91,5% (183/200) |
