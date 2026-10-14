@@ -580,26 +580,26 @@ $$
 =\frac{p_i-y_i}{N}.
 $$
 
-Chamando a derivada em relação às pré-ativações de $\boldsymbol{\Delta}^{(\ell)}$, na última camada:
+Chamando a derivada em relação às pré-ativações de $\mathbf{\Delta}^{(\ell)}$, na última camada:
 
 $$
-\boldsymbol{\Delta}^{(L)}=\frac{\mathbf{P}-\mathbf{Y}}{N}.
+\mathbf{\Delta}^{(L)}=\frac{\mathbf{P}-\mathbf{Y}}{N}.
 $$
 
 Para qualquer camada, os gradientes são:
 
 $$
 \frac{\partial L}{\partial\mathbf{W}^{(\ell)}}
-=(\mathbf{A}^{(\ell-1)})^T\boldsymbol{\Delta}^{(\ell)},\qquad
+=(\mathbf{A}^{(\ell-1)})^T\mathbf{\Delta}^{(\ell)},\qquad
 \frac{\partial L}{\partial\mathbf{b}^{(\ell)}}
-=\sum_{i=1}^{N}\boldsymbol{\Delta}_{i,:}^{(\ell)}.
+=\sum_{i=1}^{N}\mathbf{\Delta}_{i,:}^{(\ell)}.
 $$
 
 Para propagar a derivada à camada oculta anterior:
 
 $$
-\boldsymbol{\Delta}^{(\ell-1)}
-=\left[\boldsymbol{\Delta}^{(\ell)}(\mathbf{W}^{(\ell)})^T\right]
+\mathbf{\Delta}^{(\ell-1)}
+=\left[\mathbf{\Delta}^{(\ell)}(\mathbf{W}^{(\ell)})^T\right]
 \odot\left[1-(\mathbf{A}^{(\ell-1)})^2\right],
 $$
 
