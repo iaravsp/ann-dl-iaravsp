@@ -659,6 +659,157 @@ Além disso, a classe 1 foi construída com dois grupos em torno de centros opos
 A MLP alcançou **91,5%** porque sua fronteira acompanha a organização dos grupos. Os **17 erros** restantes aparecem em um conjunto com sobreposição entre as classes, especialmente próximo às fronteiras. A melhoria foi medida no teste, que não participou do treinamento.
 
 
+## Exercise 3
+
+[Notebook do Exercício 3](code/exercicio_3.ipynb)
+
+### A — Generate the data
+
+Foram usadas **1500 amostras, quatro características informativas e três classes**, com dois grupos por classe e `class_sep=1.0`. A geração usa exatamente os parâmetros do enunciados e `random_state=42`.
+
+A divisão estratificada reserva **1200 amostras para treino e 300 para teste**. As características são usadas na escala original. O teste participa apenas da avaliação final.
+
+| Conjunto | Classe 0 | Classe 1 | Classe 2 | Total |
+|---|---:|---:|---:|---:|
+| Completo | 499 | 499 | 502 | 1500 |
+| Treino | 399 | 399 | 402 | 1200 |
+| Teste | 100 | 100 | 100 | 300 |
+
+O gerador de pesos continua a sequência iniciada com semente 42 no Exercício 2. Na execução isolada deste exercício, a inicialização da rede binária é repetida apenas para reconstruir o estado do mesmo `rng`; o treinamento anterior não consome números aleatórios.
+
+### B — Adapt the network
+
+A classe `MLP` é a mesma do Exercício 2, importada de `mlp.py`. Os métodos **`forward`, `backward` e `update` foram reutilizados sem alterações**. A adaptação é feita passando três unidades de saída, a função `softmax` e a entropia cruzada categórica como argumentos.
+
+#### Softmax e entropia cruzada categórica
+
+Para uma amostra $i$, cada logit $u_{ik}$ gera uma probabilidade para a classe $k$:
+
+$$
+p_{ik}=\frac{e^{u_{ik}}}{\sum_{r=1}^{3}e^{u_{ir}}}.
+$$
+
+As três probabilidades somam 1. No código, subtrair o maior logit da linha antes das exponenciais preserva essa razão e evita overflow.
+
+O alvo é representado em one-hot: $y_{ik}=1$ para a classe correta e $0$ para as outras. A perda média é:
+
+$$
+L=-\frac{1}{N}\sum_{i=1}^{N}\sum_{k=1}^{3}y_{ik}\log(p_{ik}).
+$$
+
+O cálculo utiliza log-probabilidades obtidas dos logits, evitando calcular `log(0)` quando uma probabilidade é muito pequena.
+
+#### Derivação do gradiente da saída
+
+A derivada de uma probabilidade em relação a um logit é:
+
+$$
+\frac{\partial p_{ik}}{\partial u_{ij}}
+=p_{ik}(\delta_{kj}-p_{ij}),
+$$
+
+onde $\delta_{kj}=1$ se $k=j$ e $0$ caso contrário. Como
+$\partial L/\partial p_{ik}=-y_{ik}/(Np_{ik})$, pela regra da cadeia:
+
+$$
+\frac{\partial L}{\partial u_{ij}}
+=\sum_{k=1}^{3}\frac{\partial L}{\partial p_{ik}}
+\frac{\partial p_{ik}}{\partial u_{ij}}
+=\sum_{k=1}^{3}\left(-\frac{y_{ik}}{Np_{ik}}\right)
+p_{ik}(\delta_{kj}-p_{ij}).
+$$
+
+Cancelando $p_{ik}$ e separando os termos:
+
+$$
+\frac{\partial L}{\partial u_{ij}}
+=-\frac{1}{N}\left[
+\sum_{k=1}^{3}y_{ik}\delta_{kj}
+-p_{ij}\sum_{k=1}^{3}y_{ik}\right].
+$$
+
+O primeiro somatório é $y_{ij}$, e o segundo vale 1 porque o alvo é one-hot. Portanto:
+
+$$
+\frac{\partial L}{\partial u_{ij}}
+=-\frac{1}{N}(y_{ij}-p_{ij})
+=\frac{p_{ij}-y_{ij}}{N}.
+$$
+
+Em forma matricial, **$\partial L/\partial\mathbf{U}=(\mathbf{P}-\mathbf{Y})/N$**.
+Esse é o valor passado ao mesmo `backward` do exercício anterior; a média por $N$ é aplicada uma única vez.
+
+
+#### Código da adaptação
+
+A implementação compartilhada está em [mlp.py](code/mlp.py), apresentada no Exercício 2. O script abaixo define as novas funções de saída e perda e utiliza a mesma classe:
+
+```python
+--8<-- "docs/exercises/mlp/code/exercicio_3.py"
+```
+
+Para reproduzir a partir da raiz do repositório:
+
+```powershell
+python docs/exercises/mlp/code/exercicio_3.py
+```
+
+### C — Train and evaluate
+
+Foi utilizada a arquitetura **4 → 16 → 3**, com uma camada oculta `tanh`, saída `softmax`, inicialização de Xavier e biases inicialmente zero.
+
+| Configuração | Valor |
+|---|---|
+| Arquitetura | 4 entradas, 16 neurônios ocultos, 3 saídas |
+| Parâmetros treináveis | 131 |
+| Ativação oculta | tanh |
+| Ativação de saída | softmax |
+| Perda | Entropia cruzada categórica média |
+| Taxa de aprendizado | 0,1 |
+| Épocas | 2000 |
+| Lote | Todas as 1200 amostras de treino |
+| Predição | Classe com a maior probabilidade |
+
+A arquitetura e os hiperparâmetros foram definidos antes de avaliar o teste. A perda de treino caiu de **1,0511 para 0,3383**.
+
+A **acurácia no teste foi de 84,67%**, com **254 acertos em 300 amostras**. Na Figura 5, as linhas representam as classes reais e as colunas representam as classes previstas:
+
+$$
+\mathbf{C}=\begin{bmatrix}
+86&6&8\\
+11&78&11\\
+5&5&90
+\end{bmatrix}.
+$$
+
+A diagonal soma $86+78+90=254$ acertos; os valores fora da diagonal somam **46 erros**.
+
+
+![Figura 4 — Perda no treinamento multiclasse](figures/fig4.png)
+
+**Figura 4** — Perda de treino desde a inicialização até a época 2000.
+
+![Figura 5 — Matriz de confusão no teste](figures/fig5.png)
+
+**Figura 5** — Linhas: classes reais; colunas: classes previstas. Cada linha corresponde a 100 amostras de teste.
+
+### D — Analysis
+
+O par mais confundido é **classes 0 e 1**, com **17 erros**: seis amostras reais da classe 0 foram previstas como classe 1, e onze da classe 1 foram previstas como classe 0. Somando as duas direções para cada par:
+
+| Par de classes | Confusões no teste |
+|---|---:|
+| 0 e 1 | 6 + 11 = 17 |
+| 0 e 2 | 8 + 5 = 13 |
+| 1 e 2 | 11 + 5 = 16 |
+
+A diferença entre 17 e 16 é pequena, indicando dificuldade semelhante nos pares 0–1 e 1–2. A classe 1 teve 78 acertos em 100 amostras, a menor proporção de acertos entre as três classes.
+
+O conjunto possui **quatro dimensões informativas e seis grupos**, dois por classe. Cada classe pode ocupar mais de uma região nesse espaço; com `class_sep=1.0`, os grupos não são necessariamente bem separados. Uma explicação plausível para as confusões é a sobreposição entre regiões dos grupos dessas classes, que exige fronteiras mais complexas. A matriz informa onde ocorreram os erros; determinar a geometria exata dessa sobreposição exigiria analisar as quatro características.
+
+A regressão logística, ajustada somente no treino, obteve **66,33% no teste** (**199 acertos em 300**). A MLP obteve **84,67%**, uma melhoria de **18,33 pontos percentuais**. A camada oculta acrescentou transformações não lineares das características, permitindo combinar várias regiões para representar as três classes e seus dois grupos por classe. A melhoria foi medida em dados que não participaram do ajuste.
+
+
 ## Results summary
 
 | # | Quantity | Value |
@@ -668,3 +819,5 @@ A MLP alcançou **91,5%** porque sua fronteira acompanha a organização dos gru
 | 3 | Ex. 1 — parâmetros após a atualização | $\mathbf{W}^{(1)}\approx[[0{,}3764,-0{,}1306],[0{,}1523,0{,}4191]]$; $\mathbf{b}^{(1)}\approx[0{,}2528,-0{,}2954]$; $\mathbf{W}^{(2)}\approx[0{,}5866,-0{,}3585]$; $b^{(2)}\approx0{,}5284$ |
 | 4 | Ex. 2 — acurácia do baseline linear no teste | 47,5% (95/200) |
 | 5 | Ex. 2 — arquitetura e acurácia no teste | 2 → 8 → 1; 91,5% (183/200) |
+| 6 | Ex. 3 — arquitetura e acurácia no teste | 4 → 16 → 3; 84,67% (254/300) |
+| 7 | Ex. 3 — par de classes mais confundido | Classes 0 e 1: 17 confusões (6 + 11) |
