@@ -10,5 +10,22 @@ mkdocs-git-revision-date-localized-plugin
 # Exercicios
 numpy
 pandas
+scipy
 matplotlib
+seaborn
 scikit-learn
+imbalanced-learn
+umap-learn
+
+# Deep Learning
+# Maquina sem GPU NVIDIA -> instalar os wheels de CPU:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+torch
+torchvision
+torchinfo
+
+# Notebooks
+ipykernel
+ipywidgets
+tqdm
+openpyxl

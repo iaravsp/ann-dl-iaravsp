@@ -3,3 +3,10 @@ env/
 .cache/
 .vscode/
 target/
+__pycache__/
+
+# Datasets baixados automaticamente (datasets.MNIST(..., download=True))
+data/MNIST/
+
+# Pesos salvos pelo exercicio_1.py; sao regerados rodando o script
+docs/exercises/vae/code/checkpoints/
