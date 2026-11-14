@@ -5,7 +5,7 @@ dataset: https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset
 team:
   - "Iara Vivian"
   - "Vinicius Miranda"
-ai_use: "ChatGPT: apoio na explicação dos métodos, elaboração e revisão do código, interpretação dos resultados e organização deste relatório."
+ai_use: "ChatGPT/Codex: apoio na explicação dos métodos, elaboração e revisão do código, interpretação dos resultados e organização deste relatório. A dupla deve revisar e compreender os resultados antes da entrega."
 ---
 # Análise exploratória — Stroke Prediction Dataset
 
@@ -152,6 +152,8 @@ Foi usada correlação de Spearman para resumir associações monotônicas por p
 
 ### B. Categóricas × alvo
 
+A Tabela 6 compara **a proporção de AVC dentro de cada categoria**. Para cada linha, `AVC (%) = 100 × Casos AVC / Total`: os 54 casos entre 397 pacientes com hipertensão correspondem a 13,60%. O denominador é o tamanho daquela categoria, e não o total de casos de AVC. Como referência, a proporção geral do treino é **199 / 4.088 = 4,87%**.
+
 **Tabela 6 — Proporção de AVC dentro de cada categoria.**
 
 | Variável | Categoria | Total | Casos AVC | AVC (%) |
@@ -178,11 +180,35 @@ Foi usada correlação de Spearman para resumir associações monotônicas por p
 | smoking_status | smokes | 626 | 34 | 5.43 |
 
 
+A Figura 5 seleciona `hypertension` e `heart_disease` por apresentarem contrastes expressivos entre presença e ausência das condições, e `smoking_status` por permitir comparar várias categorias, incluindo a ausência semântica `Unknown`. O critério foi combinar contraste com o alvo e diversidade de situações relevantes ao pré-processamento; não se trata de um ranking estatístico das três melhores variáveis. Todas as sete variáveis permanecem na Tabela 6, e casamento e ocupação recebem abaixo uma comparação adicional por idade.
+
 ![Figura 5](figures/fig05.png)
 
-**Conclusão da Figura 5.** A proporção de AVC é 13,60% com hipertensão contra 3,93% sem; para doença cardíaca, 16,29% contra 4,22%. Ex-fumantes apresentam 7,84%. A linha vermelha indica 4,87% no treino. São associações observacionais, potencialmente confundidas por idade e outras características; não demonstram causalidade.
+**Conclusão da Figura 5.** A proporção de AVC é **13,60% com hipertensão contra 3,93% sem hipertensão**, aproximadamente **3,5 vezes**. Para doença cardíaca, são **16,29% contra 4,22%**, aproximadamente **3,9 vezes**. Entre ex-fumantes, a proporção é **7,84%**, frente a **4,73%** entre os que nunca fumaram e **5,43%** entre fumantes. A linha vermelha marca os **4,87%** do treino. Essas comparações descrevem associações na amostra e não efeitos causais.
 
-As diferenças por gênero (4,68% em Female e 5,14% em Male) e residência (4,51% Rural e 5,22% Urban) são menores. Já casamento (6,52% Yes contra 1,66% No) e ocupação (8,25% Self-employed; 0,18% children) podem refletir diferentes perfis etários. Zero casos em Other e Never_worked não demonstra ausência de possibilidade de AVC, dadas suas pequenas amostras.
+Fora dos painéis, `ever_married=Yes` apresenta **6,52% contra 1,66% em No**, cerca de **3,9 vezes**. Os contrastes por gênero (**5,14% Male / 4,68% Female ≈ 1,10 vez**) e residência (**5,22% Urban / 4,51% Rural ≈ 1,16 vez**) são menores descritivamente. Essas razões comparam proporções observadas; não são estimativas ajustadas por idade nem testes de significância.
+
+**Tabela 6A — Perfil etário e proporção de AVC por categoria no treino.**
+
+| Variável | Categoria | n | Idade mediana (anos) | AVC (%) |
+|---|---|---:|---:|---:|
+| ever_married | No | 1388 | 18 | 1.66 |
+| ever_married | Yes | 2700 | 54 | 6.52 |
+| work_type | Govt_job | 522 | 51 | 5.36 |
+| work_type | Never_worked | 13 | 17 | 0.00 |
+| work_type | Private | 2332 | 45 | 4.93 |
+| work_type | Self-employed | 667 | 63 | 8.25 |
+| work_type | children | 554 | 6 | 0.18 |
+| smoking_status | Unknown | 1247 | 24 | 3.05 |
+| smoking_status | formerly smoked | 714 | 57 | 7.84 |
+| smoking_status | never smoked | 1501 | 47 | 4.73 |
+| smoking_status | smokes | 626 | 48 | 5.43 |
+
+O perfil etário ajuda a interpretar essas diferenças: quem já foi casado tem idade mediana de **54 anos**, contra **18 anos** em quem nunca foi. `Self-employed` tem mediana de **63 anos** e proporção de AVC de **8,25%**, enquanto `children` tem mediana de **6 anos** e proporção de **0,18%**. Em tabagismo, `Unknown` reúne pacientes com mediana de **24 anos** e **3,05%** de AVC; ex-fumantes têm mediana de **57 anos** e **7,84%**. Como os pacientes com AVC são mais velhos na Tabela 7, esses resultados são compatíveis com possível confundimento por idade. A tabela mostra diferenças de composição etária; ela não mede quanto da associação é explicado pela idade. Isso exigiria estratificação ou modelagem ajustada.
+
+As categorias `Other` (**n=1**) e `Never_worked` (**n=13**) não permitem conclusões confiáveis a partir dos seus zero casos. O grupo com doença cardíaca (**n=221; 36 casos**) tem mais evidência que essas categorias raríssimas, mas é menor que o grupo sem doença cardíaca (**n=3.867**) e sua proporção é mais sujeita à variação amostral. `children` contém apenas **1 caso**, apesar de reunir 554 pacientes.
+
+**Implicações para a modelagem.** Entre os contrastes binários examinados, hipertensão, doença cardíaca e casamento se destacam pela magnitude das razões de proporções. Todos os preditores serão mantidos inicialmente; essas comparações não medem sua contribuição independente a um classificador. As diferenças etárias sugerem que parte das associações de casamento, ocupação e tabagismo pode refletir idade. O desempenho e a contribuição conjunta dessas variáveis deverão ser avaliados na etapa de modelagem.
 
 ### C. Numéricas × categóricas
 
@@ -213,6 +239,12 @@ O alvo binário é a variável categórica usada para agrupar os boxplots.
 
 ### A. Estratégias
 
+O diagnóstico do treino combina quatro questões: **170 ausências em IMC (4,16%)**, caudas à direita em glicose e IMC, amplitudes distintas entre numéricas e categorias nominais de baixa cardinalidade, algumas raras (Tabelas 4 e 5; Figuras 1 e 2). Soma-se a elas o desbalanceamento do alvo: **199 positivos (4,87%) para 3.889 negativos**. As decisões abaixo conectam esses achados à preparação dos dados para uma futura rede neural.
+
+**Ausências — preservar os registros e a informação de ausência.** `bmi` é a única variável com `NaN` no treino; apresenta assimetria **1,116** e média **28,92**, acima da mediana **28 kg/m²** (Tabela 4 e Figura 1). Entre imputar pela média, imputar pela mediana ou excluir linhas, escolheu-se a mediana do treino, menos sensível à cauda de valores elevados. A exclusão descartaria **37 positivos**, equivalentes a **18,59% dos 199 casos** do treino. Como os registros sem IMC têm proporção de AVC de **21,76%**, acima dos **4,87%** gerais, acrescentou-se um indicador binário de ausência. Ele é calculado antes da imputação e preserva esse padrão sem usar o alvo para preencher o IMC. A associação pode refletir o processo de coleta, exigindo cautela na generalização. As medianas aprendidas pelo bloco numérico são **45, 91,945 e 28**, respectivamente para idade, glicose e IMC; somente IMC precisou de preenchimento.
+
+**Extremos — sinalizar e manter.** A Figura 1 e os boxplots da Figura 6 motivaram a inspeção pelo critério de **1,5 × IQR**, calculado no treino. Os resultados estão na Tabela 8.
+
 **Tabela 8 — Extremos pelo critério de 1,5 IQR, estimado no treino.**
 
 | index | limite_inferior | limite_superior | quantidade | pct_dos_preenchidos |
@@ -221,16 +253,18 @@ O alvo binário é a variável categórica usada para agrupar os boxplots.
 | avg_glucose_level | 21.98 | 169.53 | 503 | 12.30 |
 | bmi | 9.35 | 47.35 | 90 | 2.30 |
 
-Os percentuais usam apenas valores preenchidos. Há **569 registros** extremos em pelo menos uma variável (13,92% do treino), incluindo sobreposição entre glicose e IMC. Foram **removidas ou limitadas 0 linhas**. Os 503 extremos de glicose contêm 66 positivos (13,12%), contra 133 em 3.585 registros dentro dos limites (3,71%). Excluí-los retiraria 33,17% dos positivos do treino; não há comprovação de erro que justifique isso. No IMC, 90 extremos contêm 3 positivos (3,33%).
 
-- **Ausências:** imputação numérica pela mediana do treino, motivada pelas caudas e pelos 170 IMCs ausentes no treino. As medianas aprendidas foram idade 45, glicose 91,945 e IMC 28. Apenas IMC precisou ser preenchido. Entre os IMCs ausentes há 37 positivos (21,76%); o indicador binário de ausência preserva esse padrão sem usar o alvo na imputação. A ausência pode refletir o processo de coleta, limitando a generalização.
-- **Extremos:** preservação dos registros, documentando os valores suspeitos e mantendo a possibilidade de auditoria da fonte. Não foi aplicada transformação logarítmica nem clipping.
-- **Codificação:** one-hot para as sete categóricas, incluindo os indicadores binários; Unknown permanece uma categoria explícita. `handle_unknown="ignore"` representa categoria inédita com zeros no bloco correspondente, sem alterar a quantidade de colunas. Na divisão utilizada, todas as categorias do teste já aparecem no treino.
-- **Escala:** RobustScaler nas numéricas, subtraindo a mediana e dividindo pelo IQR do treino. As amplitudes distintas e os extremos das Figuras 1 e 6 motivam a escolha para a futura rede neural. Esse procedimento não elimina extremos nem garante variâncias iguais; a escala ainda influencia o SMOTENC e as projeções. Colunas one-hot e indicador permanecem em 0/1.
+O critério sinalizou **503 valores de glicose (12,30% dos preenchidos)** e **90 de IMC (2,30%)**. Há **569 registros distintos (13,92% do treino)** com pelo menos um extremo, pois algumas linhas aparecem em ambos os grupos. A remoção foi considerada, mas não há evidência documental suficiente de erro que a justifique. Além disso, os extremos de glicose contêm **66 positivos**, com **13,12% de AVC**, contra **3,71%** dentro dos limites; removê-los eliminaria **33,17% dos positivos do treino**. Essa contagem dimensiona a perda de dados, sem transformar o alvo em regra de exclusão. Os extremos de IMC contêm **3 positivos em 90 registros (3,33%)**. Foram preservadas todas as linhas, sem clipping nem transformação logarítmica: **0 registros removidos ou limitados**. Estar fora do IQR não equivale a erro ou impossibilidade clínica.
 
-**Balanceamento — SMOTENC aplicado somente ao treino.** A variável-alvo `stroke` registra a ocorrência de AVC (`0` = sem AVC; `1` = com AVC). Antes do balanceamento, o treino reunia **3.889 registros sem AVC** e apenas **199 com AVC** (**4,87% de positivos**). Como essa diferença pode levar um modelo a priorizar a classe mais frequente, aplicou-se o **SMOTENC**, uma adaptação do SMOTE para dados que misturam atributos numéricos e categóricos. O objetivo é representar melhor os casos positivos sem eliminar exemplos negativos. Duplicação aleatória e pesos de classe são alternativas a comparar na etapa de modelagem.
+**Escala — reduzir a dependência das unidades e a influência dos extremos sobre os parâmetros de escala.** No treino, idade varia de **0,08 a 82**, glicose de **55,12 a 271,74** e IMC de **10,30 a 97,60** (Tabela 4). Comparou-se conceitualmente o StandardScaler, baseado em média e desvio padrão, com o RobustScaler, baseado em mediana e IQR. Como mantivemos as caudas e os extremos, escolheu-se o **RobustScaler**: valores extremos podem aumentar o desvio padrão e comprimir a região central sob padronização convencional. A escolha é metodológica, não uma superioridade demonstrada por desempenho. O RobustScaler não remove extremos, não torna a distribuição simétrica e não iguala necessariamente as variâncias. A escala afeta as distâncias usadas pelo SMOTENC, t-SNE e UMAP, a variância usada pelo PCA e a otimização da futura rede neural. Seus parâmetros são estimados somente no treino original.
 
-**Como são gerados os registros sintéticos?** O SMOTENC procura vizinhos próximos da classe minoritária (neste caso, com **`k_neighbors=5`**). Para os atributos numéricos, cria novos pontos por **interpolação entre registros positivos vizinhos**: o valor gerado fica em uma posição sorteada entre os dois exemplos, **não necessariamente no ponto médio**. Para as características categóricas, seleciona categorias observadas na vizinhança, em vez de calcular médias que produziriam categorias inválidas. As três variáveis numéricas entram imputadas e escaladas conforme o treino original; as sete categóricas e o indicador de ausência de IMC são tratados como categóricos nessa etapa. Foram definidos **`sampling_strategy=1.0`, `k_neighbors=5` e `random_state=42`**, buscando uma proporção final de **1:1** entre as classes. Após a geração, o encoder já ajustado transforma as categorias, preservando as **24 colunas** da matriz de entrada. Essa proporção é uma escolha inicial, não um valor ótimo comprovado.
+**Codificação — preservar o significado nominal.** As sete categóricas possuem entre **2 e 5 categorias** (Tabela 5). Foi descartada uma codificação inteira tratada como magnitude, pois ela imporia distâncias e ordens sem justificativa. Adotou-se **one-hot encoding**, que gera **20 colunas**. `hypertension`, `heart_disease` e `ever_married` são categóricas binárias e recebem duas colunas cada; o indicador adicional de ausência de IMC permanece em uma única coluna 0/1. Assim, o total final é **3 numéricas + 20 one-hot + 1 indicador = 24 características**.
+
+`Unknown` em tabagismo foi mantida como categoria própria porque representa **1.247 registros (30,50%)**, com **3,05%** de AVC; não equivale a nunca ter fumado. As categorias raras `Other` e `Never_worked` também foram preservadas. O encoder usa `handle_unknown="ignore"` para que uma eventual categoria não observada no treino seja representada por zeros no bloco correspondente, sem interromper a transformação. Na divisão utilizada, todas as categorias do teste já aparecem no treino. Essa configuração cobre futuras categorias inéditas e não cria categorias artificiais na base.
+
+**Balanceamento — SMOTENC aplicado somente ao treino.** Conforme orientação do professor, a reamostragem já integra esta entrega. A proporção de **4,87%** de positivos motiva ampliar sua representação para os próximos passos. Utilizou-se **SMOTENC**, variante de SMOTE para características numéricas e categóricas, em vez de interpolar diretamente as colunas one-hot com SMOTE convencional. Duplicação aleatória e pesos de classe são alternativas que poderão ser comparadas na modelagem; não foram avaliadas por desempenho nesta EDA.
+
+Para gerar os exemplos, as três numéricas entram imputadas e escaladas com os parâmetros do treino original; as sete categóricas mantêm seus valores originais e o indicador de ausência de IMC é declarado categórico binário. O método usa **`sampling_strategy=1.0`, `k_neighbors=5` e `random_state=42`**. A proporção 1:1 é uma configuração inicial, não um ótimo demonstrado. Depois da reamostragem, as categorias são transformadas pelo encoder já ajustado no treino original, mantendo as mesmas 24 colunas.
 
 **Tabela 8A — Classes antes e depois do SMOTENC e conjunto de teste.**
 
@@ -240,9 +274,7 @@ Os percentuais usam apenas valores preenchidos. Há **569 registros** extremos e
 | Treino balanceado | 3.889 | 3.889 | 7.778 | 50,00 |
 | Teste original | 972 | 50 | 1.022 | 4,89 |
 
-**Resultado do balanceamento.** O SMOTENC acrescentou **3.690 registros sintéticos com `stroke = 1`** aos **199 positivos originais**, totalizando **3.889 positivos**. Os **3.889 negativos** foram mantidos. Portanto, o treino passou de **4.088 para 7.778 registros** (**aumento de aproximadamente 90,3%**), e a proporção positiva passou de **4,87% para 50,00%**. A reamostragem **não modifica nem elimina os registros reais**: ela apenas acrescenta exemplos artificiais à versão balanceada do treino. O conjunto de teste também **não foi reamostrado** e permanece com **50 positivos e 972 negativos**.
-
-Os exemplos sintéticos **não representam novos pacientes observados**. Embora o SMOTENC corrija a diferença numérica entre as classes, isso não assegura melhor desempenho preditivo nem coerência clínica de todas as combinações produzidas. Esses pontos deverão ser avaliados na modelagem e na validação, sem incluir os exemplos artificiais nas estatísticas exploratórias dos pacientes reais.
+Foram gerados **3.690 exemplos positivos sintéticos**. O SMOTENC equilibra as contagens, mas não garante separabilidade, melhora preditiva ou coerência clínica de todas as combinações geradas. A avaliação futura deve usar pacientes reais e comparar estratégias na validação. Os registros sintéticos não são novos pacientes observados e não entram nas estatísticas da EDA.
 
 **Fluxo e prevenção de vazamento.** A divisão treino/teste antecede todos os ajustes. Imputação, escala e categorias do encoder são aprendidas no treino original; o SMOTENC utiliza somente esse treino e seus rótulos. O teste passa apenas por `transform` e não é reamostrado. Em validação futura, a divisão de treino/validação deve ocorrer antes dessas operações, repetindo os ajustes e a reamostragem apenas na parte de treino de cada dobra. Não se deve dividir o conjunto já balanceado para avaliar o modelo.
 
@@ -254,7 +286,9 @@ As projeções usam as mesmas **24 características transformadas dos 4.088 paci
 
 ![Figura 7](figures/fig07.png)
 
-**Conclusão da Figura 7.** Duas dimensões deixam 53,35% da variância fora da visualização. A curva mostra que vários componentes adicionais são necessários para representar a maior parte da dispersão. Variância explicada não é acurácia nem capacidade de explicar o alvo.
+**Como ler a Figura 7.** O painel esquerdo mostra quanto cada componente acrescenta individualmente; o direito soma as contribuições até o número de componentes indicado no eixo horizontal. Os destaques mostram 2 componentes (46,65%), 7 (83,11%) e 12 (96,89%). As referências horizontais de 80% e 95% são apenas marcos de leitura, não metas obrigatórias.
+
+**Conclusão da Figura 7.** A representação em duas dimensões retém 46,65% da variância e deixa 53,35% fora da visualização. São necessários vários componentes para representar a maior parte da dispersão. A variância explicada não mede acurácia nem associação com AVC.
 
 **Tabela 9 — Pesos das variáveis nos dois primeiros componentes (todos os coeficientes).**
 
@@ -350,7 +384,7 @@ O [script completo](code/eda.py) reproduz as tabelas e figuras. Para executá-lo
 
 ## 5. Síntese
 
-Idade apresenta a maior diferença de localização entre classes (Tabela 7); hipertensão e doença cardíaca têm proporções de AVC acima do conjunto (Tabela 6). Glicose elevada e ausência de IMC também distinguem subconjuntos com mais positivos (seção 4A). As Figuras 8–10 mostram que esses padrões coexistem com ampla mistura de classes.
+Idade apresenta uma diferença expressiva de localização entre classes (Tabela 7); hipertensão e doença cardíaca têm proporções de AVC acima do conjunto (Tabela 6). A Tabela 6A mostra perfis etários distintos entre categorias de casamento, ocupação e tabagismo, compatíveis com possível confundimento. Glicose elevada e ausência de IMC também distinguem subconjuntos com mais positivos (seção 4A). As Figuras 8–10 mostram que esses padrões coexistem com ampla mistura de classes.
 
 | Risco para modelagem | Evidência | Plano |
 |---|---|---|
